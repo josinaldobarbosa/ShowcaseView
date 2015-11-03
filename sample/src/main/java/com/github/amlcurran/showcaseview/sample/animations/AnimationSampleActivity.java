@@ -68,11 +68,11 @@ public class AnimationSampleActivity extends Activity implements View.OnClickLis
     public void onClick(View v) {
         switch (counter) {
             case 0:
-                showcaseView.setShowcase(new ViewTarget(textView2), true);
+                showcaseView.setShowcase(true, new ViewTarget(textView2));
                 break;
 
             case 1:
-                showcaseView.setShowcase(new ViewTarget(textView3), true);
+                showcaseView.setShowcase(true, new ViewTarget(textView3));
                 break;
 
             case 2:
