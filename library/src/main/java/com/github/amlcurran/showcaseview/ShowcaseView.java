@@ -38,6 +38,8 @@ import android.widget.RelativeLayout;
 
 import com.github.amlcurran.showcaseview.targets.Target;
 
+import java.util.HashSet;
+
 import static com.github.amlcurran.showcaseview.AnimationFactory.AnimationEndListener;
 import static com.github.amlcurran.showcaseview.AnimationFactory.AnimationStartListener;
 
@@ -62,9 +64,11 @@ public class ShowcaseView extends RelativeLayout
     private final ShotStateStore shotStateStore;
 
     // Showcase metrics
-    private int showcaseX = -1;
-    private int showcaseY = -1;
+    HashSet<Point> showcases = new HashSet<>();
     private float scaleMultiplier = 1f;
+
+    // Text position
+    private Point textItemPosition = new Point(-1, -1); // TODO setado como default
 
     // Touch items
     private boolean hasCustomClickListener = false;
@@ -147,25 +151,22 @@ public class ShowcaseView extends RelativeLayout
         return shotStateStore.hasShot();
     }
 
-    void setShowcasePosition(Point point) {
-        setShowcasePosition(point.x, point.y);
-    }
-
-    void setShowcasePosition(int x, int y) {
+    void setShowcasePosition(Target target) {
         if (shotStateStore.hasShot()) {
             return;
         }
-        showcaseX = x;
-        showcaseY = y;
+
+        showcases.add(target.getPoint());
+
         //init();
         invalidate();
     }
 
-    public void setTarget(final Target target) {
-        setShowcase(target, false);
+    public void setTarget(final Target... target) {
+        setShowcase(false, target);
     }
 
-    public void setShowcase(final Target target, final boolean animate) {
+    public void setShowcase(final boolean animate, final Target... target) {
         postDelayed(new Runnable() {
             @Override
             public void run() {
@@ -173,14 +174,18 @@ public class ShowcaseView extends RelativeLayout
                 if (!shotStateStore.hasShot()) {
 
                     updateBitmap();
-                    Point targetPoint = target.getPoint();
-                    if (targetPoint != null) {
+
+                    if (target != null) {
                         hasNoTarget = false;
-                        if (animate) {
-                            animationFactory.animateTargetToPoint(ShowcaseView.this, targetPoint);
-                        } else {
-                            setShowcasePosition(targetPoint);
+
+                        for (Target t : target) {
+                            if (animate) {
+                                animationFactory.animateTargetToPoint(ShowcaseView.this, t.getPoint());
+                            } else {
+                                setShowcasePosition(t);
+                            }
                         }
+
                     } else {
                         hasNoTarget = true;
                         invalidate();
@@ -206,23 +211,13 @@ public class ShowcaseView extends RelativeLayout
     }
 
     public boolean hasShowcaseView() {
-        return (showcaseX != 1000000 && showcaseY != 1000000) && !hasNoTarget;
-    }
+        for (Point point : showcases) {
+            if ((point.x != 1000000 && point.y != 1000000) && !hasNoTarget) {
+                return false;
+            }
+        }
 
-    public void setShowcaseX(int x) {
-        setShowcasePosition(x, showcaseY);
-    }
-
-    public void setShowcaseY(int y) {
-        setShowcasePosition(showcaseX, y);
-    }
-
-    public int getShowcaseX() {
-        return showcaseX;
-    }
-
-    public int getShowcaseY() {
-        return showcaseY;
+        return true;
     }
 
     /**
@@ -259,7 +254,7 @@ public class ShowcaseView extends RelativeLayout
     }
 
     private void recalculateText() {
-        boolean recalculatedCling = showcaseAreaCalculator.calculateShowcaseRect(showcaseX, showcaseY, showcaseDrawer);
+        boolean recalculatedCling = showcaseAreaCalculator.calculateShowcaseRect(textItemPosition.x, textItemPosition.y, showcaseDrawer);
         boolean recalculateText = recalculatedCling || hasAlteredText;
         if (recalculateText) {
             textDrawer.calculateTextPosition(getMeasuredWidth(), getMeasuredHeight(), this, shouldCentreText);
@@ -270,17 +265,25 @@ public class ShowcaseView extends RelativeLayout
     @SuppressWarnings("NullableProblems")
     @Override
     protected void dispatchDraw(Canvas canvas) {
-        if (showcaseX < 0 || showcaseY < 0 || shotStateStore.hasShot() || bitmapBuffer == null) {
-            super.dispatchDraw(canvas);
-            return;
+
+        // Checks if is valid
+        for (Point p : showcases) {
+            if (p.x < 0 || p.y < 0 || shotStateStore.hasShot() || bitmapBuffer == null) {
+                super.dispatchDraw(canvas);
+                return;
+            }
         }
 
-        //Draw background color
+        // Draw background color
         showcaseDrawer.erase(bitmapBuffer);
 
         // Draw the showcase drawable
         if (!hasNoTarget) {
-            showcaseDrawer.drawShowcase(bitmapBuffer, showcaseX, showcaseY, scaleMultiplier);
+
+            for (Point p : showcases) {
+                showcaseDrawer.drawShowcase(bitmapBuffer, p.x, p.y, scaleMultiplier);
+            }
+
             showcaseDrawer.drawToCanvas(canvas, bitmapBuffer);
         }
 
@@ -345,17 +348,23 @@ public class ShowcaseView extends RelativeLayout
             return true;
         }
 
-        float xDelta = Math.abs(motionEvent.getRawX() - showcaseX);
-        float yDelta = Math.abs(motionEvent.getRawY() - showcaseY);
-        double distanceFromFocus = Math.sqrt(Math.pow(xDelta, 2) + Math.pow(yDelta, 2));
+        boolean result = false;
 
-        if (MotionEvent.ACTION_UP == motionEvent.getAction() &&
-                hideOnTouch && distanceFromFocus > showcaseDrawer.getBlockedRadius()) {
-            this.hide();
-            return true;
+        for (Point showcase : showcases) {
+            float xDelta = Math.abs(motionEvent.getRawX() - showcase.x);
+            float yDelta = Math.abs(motionEvent.getRawY() - showcase.y);
+            double distanceFromFocus = Math.sqrt(Math.pow(xDelta, 2) + Math.pow(yDelta, 2));
+
+            if (MotionEvent.ACTION_UP == motionEvent.getAction() &&
+                    hideOnTouch && distanceFromFocus > showcaseDrawer.getBlockedRadius()) {
+                this.hide();
+                return true;
+            }
+
+            result = blockTouches && distanceFromFocus > showcaseDrawer.getBlockedRadius();
         }
 
-        return blockTouches && distanceFromFocus > showcaseDrawer.getBlockedRadius();
+        return result; // returning the last, is this a problem?
     }
 
     private static void insertShowcaseView(ShowcaseView showcaseView, ViewGroup parent, int parentIndex) {
@@ -503,7 +512,7 @@ public class ShowcaseView extends RelativeLayout
          * @param target a {@link com.github.amlcurran.showcaseview.targets.Target} representing
          *               the item to showcase (e.g., a button, or action item).
          */
-        public Builder setTarget(Target target) {
+        public Builder setTarget(Target... target) {
             showcaseView.setTarget(target);
             return this;
         }
