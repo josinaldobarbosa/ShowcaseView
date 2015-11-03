@@ -42,5 +42,9 @@
 
         <activity android:name=".CustomShowcaseActivity" />
 
+        <activity
+            android:theme="@style/Theme.AppCompat"
+            android:name=".SampleMultipleShowCaseActivity" />
+
     </application>
 </manifest>

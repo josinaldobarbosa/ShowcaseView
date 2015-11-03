@@ -74,4 +74,16 @@
         <item name="android:textColor">?android:attr/textColorSecondary</item>
     </style>
 
+    <style name="Tabs.Base" parent="Widget.Design.TabLayout">
+        <item name="tabIndicatorColor">#424242</item>
+        <item name="tabIndicatorHeight">10dp</item>
+        <item name="tabMode">scrollable</item>
+        <item name="tabGravity">fill</item>
+    </style>
+
+    <style name="Tabs.Selection" parent="Tabs.Base">
+        <item name="tabIndicatorColor">#00BCD4</item>
+        <item name="tabMode">fixed</item>
+    </style>
+
 </resources>

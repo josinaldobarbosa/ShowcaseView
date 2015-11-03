@@ -141,6 +141,9 @@ public class SampleActivity extends Activity implements View.OnClickListener,
             case 4:
                 startActivity(new Intent(this, CustomShowcaseActivity.class));
                 break;
+            case 5:
+                startActivity(new Intent(this, SampleMultipleShowCaseActivity.class));
+                break;
         }
     }
 
@@ -151,7 +154,8 @@ public class SampleActivity extends Activity implements View.OnClickListener,
                 R.string.title_animations,
                 R.string.title_single_shot,
                 R.string.custom_text,
-                 R.string.custom_showcase_title//, R.string.title_memory
+                 R.string.custom_showcase_title,//, R.string.title_memory
+                 R.string.custom_showcase_multiple
         };
 
         private static final int[] SUMMARY_RES_IDS = new int[] {
@@ -159,7 +163,9 @@ public class SampleActivity extends Activity implements View.OnClickListener,
                 R.string.sum_animations,
                 R.string.sum_single_shot,
                 R.string.custom_text_summary,
-                R.string.custom_showcase_summary//, R.string.sum_memory
+                R.string.custom_showcase_summary,//, R.string.sum_memory
+                R.string.custom_showcase_multiple_summary
+
         };
 
         public HardcodedListAdapter(Context context) {
