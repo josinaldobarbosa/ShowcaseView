@@ -28,6 +28,7 @@ import android.text.Layout;
 import android.text.TextPaint;
 import android.text.TextUtils;
 import android.util.AttributeSet;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -599,6 +600,22 @@ public class ShowcaseView extends RelativeLayout
         }
 
         /**
+         * Sets the conpensation in position of text
+         * 0 = not modify position
+         * width positive = move text to right
+         * width negative = move text to left
+         * heigth positive = move text to down
+         * heigth negative = move text to up
+         */
+        public Builder setCompensationTextPosition(int width, int heigth) {
+            float mWidth = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, width, activity.getResources().getDisplayMetrics());
+            float mHeigth = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, heigth, activity.getResources().getDisplayMetrics());
+
+            showcaseView.setCompensationTextPosition(mWidth, mHeigth);
+            return this;
+        }
+
+        /**
          * Replace the end button with the one provided. Note that this resets any OnClickListener provided
          * by {@link #setOnClickListener(OnClickListener)}, so call this method before that one.
          */
@@ -655,6 +672,12 @@ public class ShowcaseView extends RelativeLayout
 
     private void setContentTextPaint(TextPaint paint) {
         this.textDrawer.setContentPaint(paint);
+        hasAlteredText = true;
+        invalidate();
+    }
+
+    private void setCompensationTextPosition(float width, float heigth) {
+        this.textDrawer.setCompensationTextPosition(width, heigth);
         hasAlteredText = true;
         invalidate();
     }

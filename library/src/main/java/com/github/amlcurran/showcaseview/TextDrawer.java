@@ -45,6 +45,8 @@ class TextDrawer {
 
     private Layout.Alignment detailTextAlignment = Layout.Alignment.ALIGN_NORMAL;
     private Layout.Alignment titleTextAlignment = Layout.Alignment.ALIGN_NORMAL;
+    private float compensationTextPositionWidth;
+    private float compensationTextPositionHeight;
     private CharSequence mTitle, mDetails;
     private float[] mBestTextPosition = new float[3];
     private DynamicLayout mDynamicTitleLayout;
@@ -72,6 +74,9 @@ class TextDrawer {
         if (shouldDrawText()) {
             float[] textPosition = getBestTextPosition();
 
+            float textPositionX = getCalculateTextPosition(textPosition[INDEX_TEXT_START_X], compensationTextPositionWidth);
+            float textPositionY = getCalculateTextPosition(textPosition[INDEX_TEXT_START_Y], compensationTextPositionHeight);
+
             if (!TextUtils.isEmpty(mTitle)) {
                 canvas.save();
                 if (hasRecalculated) {
@@ -79,7 +84,7 @@ class TextDrawer {
                                                             (int) mBestTextPosition[INDEX_TEXT_WIDTH], titleTextAlignment, 1.0f, 1.0f, true);
                 }
                 if (mDynamicTitleLayout != null) {
-                    canvas.translate(textPosition[INDEX_TEXT_START_X], textPosition[INDEX_TEXT_START_Y]);
+                    canvas.translate(textPositionX, textPositionY);
                     mDynamicTitleLayout.draw(canvas);
                     canvas.restore();
                 }
@@ -93,7 +98,7 @@ class TextDrawer {
                 }
                 float offsetForTitle = mDynamicTitleLayout != null ? mDynamicTitleLayout.getHeight() : 0;
                 if (mDynamicDetailLayout != null) {
-                    canvas.translate(textPosition[INDEX_TEXT_START_X], textPosition[INDEX_TEXT_START_Y] + offsetForTitle);
+                    canvas.translate(textPositionX, textPositionY + offsetForTitle);
                     mDynamicDetailLayout.draw(canvas);
                     canvas.restore();
                 }
@@ -236,4 +241,18 @@ class TextDrawer {
         }
         forcedTextPosition = textPosition;
     }
+
+    public void setCompensationTextPosition(float width, float height) {
+        this.compensationTextPositionWidth = width;
+        this.compensationTextPositionHeight = height;
+    }
+
+    private float getCalculateTextPosition(float position, float compesationText) {
+        if (compesationText >= 0) {
+            return (position + compesationText);
+        } else {
+            return (position - (- compesationText));
+        }
+    }
+
 }

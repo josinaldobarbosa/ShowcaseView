@@ -43,13 +43,16 @@ public class SampleMultipleShowCaseActivity extends AppCompatActivity {
 
         final ShowcaseView sv = new ShowcaseView.Builder(this)
                 .setTarget(new ViewTarget(tab1), new ViewTarget(tab2), new ViewTarget(tab3))
-                .withNewStyleShowcase()
+                .withMaterialShowcase()
                 .setStyle(R.style.CustomShowcaseTheme2)
                 //.singleShot(uniqueId)
                 .setContentTitle("Titulo")
                 .setContentTitlePaint(titlePaint)
                 .setContentText("Descrição de teste de lerolero")
+                .setCompensationTextPosition(0, 100)
                 .build();
+
+        sv.setBlocksTouches(true);
 
         sv.setTitleTextAlignment(Layout.Alignment.ALIGN_CENTER);
         sv.setDetailTextAlignment(Layout.Alignment.ALIGN_CENTER);
