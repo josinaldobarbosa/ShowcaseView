@@ -57,7 +57,7 @@ public class ShowcaseView extends RelativeLayout
     public static final int ABOVE_SHOWCASE = 1;
     public static final int BELOW_SHOWCASE = 3;
 
-    private Button mEndButton;
+    private View mEndView;
     private final TextDrawer textDrawer;
     private ShowcaseDrawer showcaseDrawer;
     private final ShowcaseAreaCalculator showcaseAreaCalculator;
@@ -115,7 +115,7 @@ public class ShowcaseView extends RelativeLayout
         fadeInMillis = getResources().getInteger(android.R.integer.config_mediumAnimTime);
         fadeOutMillis = getResources().getInteger(android.R.integer.config_mediumAnimTime);
 
-        mEndButton = (Button) LayoutInflater.from(context).inflate(R.layout.showcase_button, null);
+        mEndView = LayoutInflater.from(context).inflate(R.layout.showcase_button, null);
         if (newStyle) {
             showcaseDrawer = new NewShowcaseDrawer(getResources());
         } else {
@@ -132,18 +132,18 @@ public class ShowcaseView extends RelativeLayout
 
         setOnTouchListener(this);
 
-        if (mEndButton.getParent() == null) {
+        if (mEndView.getParent() == null) {
             int margin = (int) getResources().getDimension(R.dimen.button_margin);
             RelativeLayout.LayoutParams lps = (LayoutParams) generateDefaultLayoutParams();
             lps.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
             lps.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
             lps.setMargins(margin, margin, margin, margin);
-            mEndButton.setLayoutParams(lps);
-            mEndButton.setText(android.R.string.ok);
+            mEndView.setLayoutParams(lps);
+            setTextButtonClose(android.R.string.ok);
             if (!hasCustomClickListener) {
-                mEndButton.setOnClickListener(hideOnClickListener);
+                mEndView.setOnClickListener(hideOnClickListener);
             }
-            addView(mEndButton);
+            addView(mEndView);
         }
 
     }
@@ -230,11 +230,11 @@ public class ShowcaseView extends RelativeLayout
         if (shotStateStore.hasShot()) {
             return;
         }
-        if (mEndButton != null) {
+        if (mEndView != null) {
             if (listener != null) {
-                mEndButton.setOnClickListener(listener);
+                mEndView.setOnClickListener(listener);
             } else {
-                mEndButton.setOnClickListener(hideOnClickListener);
+                mEndView.setOnClickListener(hideOnClickListener);
             }
         }
         hasCustomClickListener = true;
@@ -249,9 +249,7 @@ public class ShowcaseView extends RelativeLayout
     }
 
     public void setButtonText(CharSequence text) {
-        if (mEndButton != null) {
-            mEndButton.setText(text);
-        }
+        setTextButtonClose(text.toString());
     }
 
     private void recalculateText() {
@@ -397,11 +395,11 @@ public class ShowcaseView extends RelativeLayout
     }
 
     public void hideButton() {
-        mEndButton.setVisibility(GONE);
+        mEndView.setVisibility(GONE);
     }
 
     public void showButton() {
-        mEndButton.setVisibility(VISIBLE);
+        mEndView.setVisibility(VISIBLE);
     }
 
     /**
@@ -625,6 +623,15 @@ public class ShowcaseView extends RelativeLayout
         }
 
         /**
+         * Replace the end view with the one provided. Note that this resets any OnClickListener provided
+         * by {@link #setOnClickListener(OnClickListener)}, so call this method before that one.
+         */
+        public Builder replaceEndButton(View viewEnd) {
+            showcaseView.setEndButton(viewEnd);
+            return this;
+        }
+
+        /**
          * Replace the end button with the one provided. Note that this resets any OnClickListener provided
          * by {@link #setOnClickListener(OnClickListener)}, so call this method before that one.
          */
@@ -646,11 +653,11 @@ public class ShowcaseView extends RelativeLayout
 
     }
 
-    private void setEndButton(Button button) {
-        LayoutParams copyParams = (LayoutParams) mEndButton.getLayoutParams();
-        mEndButton.setOnClickListener(null);
-        removeView(mEndButton);
-        mEndButton = button;
+    private void setEndButton(View button) {
+        LayoutParams copyParams = (LayoutParams) mEndView.getLayoutParams();
+        mEndView.setOnClickListener(null);
+        removeView(mEndView);
+        mEndView = button;
         button.setOnClickListener(hideOnClickListener);
         button.setLayoutParams(copyParams);
         addView(button);
@@ -706,7 +713,7 @@ public class ShowcaseView extends RelativeLayout
      */
     @Override
     public void setButtonPosition(RelativeLayout.LayoutParams layoutParams) {
-        mEndButton.setLayoutParams(layoutParams);
+        mEndView.setLayoutParams(layoutParams);
     }
 
     /**
@@ -794,7 +801,7 @@ public class ShowcaseView extends RelativeLayout
         showcaseDrawer.setShowcaseColour(showcaseColor);
         showcaseDrawer.setBackgroundColour(backgroundColor);
         tintButton(showcaseColor, tintButton);
-        mEndButton.setText(buttonText);
+        setTextButtonClose(buttonText);
         textDrawer.setTitleStyling(titleTextAppearance);
         textDrawer.setDetailStyling(detailTextAppearance);
         hasAlteredText = true;
@@ -806,9 +813,9 @@ public class ShowcaseView extends RelativeLayout
 
     private void tintButton(int showcaseColor, boolean tintButton) {
         if (tintButton) {
-            mEndButton.getBackground().setColorFilter(showcaseColor, PorterDuff.Mode.MULTIPLY);
+            mEndView.getBackground().setColorFilter(showcaseColor, PorterDuff.Mode.MULTIPLY);
         } else {
-            mEndButton.getBackground().setColorFilter(HOLO_BLUE, PorterDuff.Mode.MULTIPLY);
+            mEndView.getBackground().setColorFilter(HOLO_BLUE, PorterDuff.Mode.MULTIPLY);
         }
     }
 
@@ -837,5 +844,19 @@ public class ShowcaseView extends RelativeLayout
             hide();
         }
     };
+
+    private void setTextButtonClose(int text) {
+        if (isButtonValid())
+            ((Button) mEndView).setText(text);
+    }
+
+    private void setTextButtonClose(String text) {
+        if (isButtonValid())
+            ((Button) mEndView).setText(text);
+    }
+
+    private boolean isButtonValid() {
+        return (mEndView != null && mEndView instanceof Button);
+    }
 
 }
