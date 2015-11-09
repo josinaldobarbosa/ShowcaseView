@@ -25,6 +25,10 @@ sv = new ShowcaseView.Builder(this)
         .build();
 ~~~
 
+**CAUTION: **
+my modifications may have caused malfunction of some functions that were not my focus.
+
+
 Copyright and Licensing
 ----
 This library is distributed under an Apache 2.0 License.
