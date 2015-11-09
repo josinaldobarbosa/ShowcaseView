@@ -24,6 +24,13 @@ sv = new ShowcaseView.Builder(this)
         ...
         .build();
 ~~~
+- Use any view in action for close not only button
+~~~
+sv = new ShowcaseView.Builder(this)
+        .replaceEndButton(MyCustomView);
+        ...
+        .build();
+~~~
 
 **CAUTION:**
  my modifications may have caused malfunction of some functions that were not my focus.
