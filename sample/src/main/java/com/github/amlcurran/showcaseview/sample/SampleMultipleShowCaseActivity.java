@@ -7,9 +7,13 @@ import android.support.design.widget.TabLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.text.Layout;
 import android.text.TextPaint;
+import android.util.TypedValue;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -49,7 +53,8 @@ public class SampleMultipleShowCaseActivity extends AppCompatActivity {
                 .setContentTitle("Titulo")
                 .setContentTitlePaint(titlePaint)
                 .setContentText("Descrição de teste de lerolero")
-                .setCompensationTextPosition(0, 100)
+                .setCompensationTextPosition(0, 110)
+                .replaceEndButton(getShowCaseCloseView())
                 .build();
 
         sv.setBlocksTouches(true);
@@ -58,11 +63,9 @@ public class SampleMultipleShowCaseActivity extends AppCompatActivity {
         sv.setDetailTextAlignment(Layout.Alignment.ALIGN_CENTER);
         sv.forceTextPosition(ShowcaseView.BELOW_SHOWCASE);
 
+        sv.setButtonPosition(getLayoutParamsButtonClose());
+
         sv.setHideOnTouchOutside(true);
-
-
-
-
 
 
         Button btn1 = (Button) findViewById(R.id.newButton);
@@ -72,6 +75,30 @@ public class SampleMultipleShowCaseActivity extends AppCompatActivity {
                 Toast.makeText(SampleMultipleShowCaseActivity.this, "Click!", Toast.LENGTH_SHORT).show();
             }
         });
+    }
+
+    private View getShowCaseCloseView() {
+        ImageView imageClose = new ImageView(this);
+        imageClose.setImageResource(android.R.drawable.ic_menu_close_clear_cancel);
+        return imageClose;
+    }
+
+    private RelativeLayout.LayoutParams getLayoutParamsButtonClose() {
+        int margin = 16;
+        int moveTopDown = 21;
+
+        margin = ((Number) (getResources().getDisplayMetrics().density * margin)).intValue();
+        RelativeLayout.LayoutParams lps = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT);
+        lps.addRule(RelativeLayout.ALIGN_PARENT_TOP);
+        lps.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
+
+        int marginTop = margin + (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
+                moveTopDown,
+                getResources().getDisplayMetrics());
+
+        lps.setMargins(margin, marginTop, margin, margin);
+        return lps;
     }
 
     private View addTabsWithContent(String texto) {
