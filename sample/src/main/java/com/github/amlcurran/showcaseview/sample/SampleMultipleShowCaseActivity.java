@@ -52,7 +52,7 @@ public class SampleMultipleShowCaseActivity extends AppCompatActivity {
                 //.singleShot(uniqueId)
                 .setContentTitlePaint(titlePaint)
                 .setContentText("Navegue aqui para conhecer as seções e descubra o que está bombando dentro de cada uma.")
-                .setCompensationTextPosition(0, 220)
+                .setCompensationTextPosition(0, 180)
                 .replaceEndButton(getShowCaseCloseView())
                 .build();
 

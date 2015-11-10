@@ -22,12 +22,12 @@ import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.CornerPathEffect;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.Point;
 import android.graphics.PorterDuff;
-import android.graphics.RectF;
 import android.text.Layout;
 import android.text.TextPaint;
 import android.text.TextUtils;
@@ -61,6 +61,11 @@ public class ShowcaseView extends RelativeLayout
     public static final int RIGHT_OF_SHOWCASE = 2;
     public static final int ABOVE_SHOWCASE = 1;
     public static final int BELOW_SHOWCASE = 3;
+
+
+    //Arrows
+    public static final int MARGIN_FROM_TEXT = 16;
+    public static final int MARGIN_FROM_SPOT = 100;
 
     private View mEndView;
     private final TextDrawer textDrawer;
@@ -309,9 +314,9 @@ public class ShowcaseView extends RelativeLayout
             float width = textPosition[INDEX_TEXT_WIDTH];
 
             if (!showcases.isEmpty()) {
-                createArrow(canvas, midx - (width / 4), (int) midy, showcases.get(1).x, (int) (showcases.get(1).y + showcaseDrawer.getBlockedRadius()), width);
-                createArrow(canvas, midx, (int) midy, showcases.get(2).x, (int) (showcases.get(2).y + showcaseDrawer.getBlockedRadius()), width);
-                createArrow(canvas, midx + (width / 4), (int) midy, showcases.get(3).x, (int) (showcases.get(3).y + showcaseDrawer.getBlockedRadius()), width);
+                createArrow(canvas, midx - (width / 4), (int) midy, showcases.get(1).x, (int) (showcases.get(1).y + (showcaseDrawer.getBlockedRadius() / 2)), width);
+                createArrow(canvas, midx, (int) midy, showcases.get(2).x, (int) (showcases.get(2).y + (showcaseDrawer.getBlockedRadius() / 2)), width);
+                createArrow(canvas, midx + (width / 4), (int) midy, showcases.get(3).x, (int) (showcases.get(3).y + (showcaseDrawer.getBlockedRadius() / 2)), width);
             }
         }
 
@@ -321,24 +326,22 @@ public class ShowcaseView extends RelativeLayout
 
 
     private void createArrow(Canvas canvas, float x, int y, int xend, int yend, float width) {
-        Paint paint = new Paint();
-        paint.setColor(Color.WHITE);
-        paint.setStrokeWidth(3);
-        paint.setStyle(Paint.Style.STROKE);
-        paint.setDither(false);
-        paint.setAntiAlias(true);
+        Paint paint = getPaint();
 
-        Point startPoint = new Point((int) (x + (width / 2)), y - 16);
-        Point endPoint = new Point(xend, yend + 48);
+        Point startPoint = new Point((int) (x + (width / 2)), y - MARGIN_FROM_TEXT);
+        Point endPoint = new Point(xend, yend + MARGIN_FROM_SPOT);
 
         Log.d("LINE ANGLE", "" + angleMadeByLine(startPoint, endPoint));
         double angle = angleMadeByLine(startPoint, endPoint);
 
-
-        Point a = new Point(startPoint.x,startPoint.y);
+        Point a = new Point(startPoint.x, startPoint.y);
         Point b = new Point(endPoint.x, endPoint.y);
-        Point c = new Point(endPoint.x - 15, endPoint.y + 21);
-        Point d = new Point(endPoint.x + 15, endPoint.y + 21);
+        Point c = new Point(endPoint.x, endPoint.y);
+        Point d = new Point(endPoint.x, endPoint.y);
+
+        applyCompensation(c, -15, 21);
+        applyCompensation(d, +15, 21);
+
 
         float[] lineRotated1 = {};
         float[] lineRotated2 = {};
@@ -346,55 +349,72 @@ public class ShowcaseView extends RelativeLayout
         //I need to draw a couple of lines A --> B , B --> C , B --> D
 
         if (angle < 270) {
-            lineRotated1 = getRotatedPoints(angle + 63, b, c);
-            lineRotated2 = getRotatedPoints(angle + 63, b, d);
-
+            lineRotated1 = getRotatedPoints(angle + 60, b, c);
+            lineRotated2 = getRotatedPoints(angle + 60, b, d);
             canvas.drawLine(startPoint.x, startPoint.y, endPoint.x, endPoint.y, paint);
-            canvas.drawLine(endPoint.x, endPoint.y, lineRotated1[2],lineRotated1[3], paint);
-            canvas.drawLine(endPoint.x, endPoint.y, lineRotated2[2],lineRotated2[3], paint);
+            canvas.drawLine(endPoint.x, endPoint.y, lineRotated1[2], lineRotated1[3], paint);
+            canvas.drawLine(endPoint.x, endPoint.y, lineRotated2[2], lineRotated2[3], paint);
+            c = new Point((int) lineRotated1[2], (int) lineRotated1[3]);
+            d = new Point((int) lineRotated2[2], (int) lineRotated2[3]);
+
+            drawPath(canvas, paint, a, b, c, d);
             return;
         }
 
         if (angle > 270) {
-            lineRotated1 = getRotatedPoints(-angle - 21, b, c);
-            lineRotated2 = getRotatedPoints(-angle - 21, b, d);
+            lineRotated1 = getRotatedPoints(-angle, b, c);
+            lineRotated2 = getRotatedPoints(-angle, b, d);
 
             canvas.drawLine(startPoint.x, startPoint.y, endPoint.x, endPoint.y, paint);
-            canvas.drawLine(endPoint.x, endPoint.y, lineRotated1[2],lineRotated1[3], paint);
-            canvas.drawLine(endPoint.x, endPoint.y, lineRotated2[2],lineRotated2[3], paint);
+            canvas.drawLine(endPoint.x, endPoint.y, lineRotated1[2], lineRotated1[3], paint);
+            canvas.drawLine(endPoint.x, endPoint.y, lineRotated2[2], lineRotated2[3], paint);
+
+            c = new Point((int) lineRotated1[2], (int) lineRotated1[3]);
+            d = new Point((int) lineRotated2[2], (int) lineRotated2[3]);
+
+            drawPath(canvas, paint, a, b, c, d);
+
             return;
         }
 
+        drawPath(canvas, paint, a, b, c, d);
+
         canvas.drawLine(startPoint.x, startPoint.y, endPoint.x, endPoint.y, paint);
-        canvas.drawLine(endPoint.x, endPoint.y, endPoint.x - 15, endPoint.y + 21, paint);
-        canvas.drawLine(endPoint.x, endPoint.y, endPoint.x + 15, endPoint.y + 21, paint);
+        canvas.drawLine(endPoint.x, endPoint.y, c.x, c.y, paint);
+        canvas.drawLine(endPoint.x, endPoint.y, d.x, d.y, paint);
+    }
 
-        return;
+    private void applyCompensation(Point point, int xvalue, int yvalue) {
+        point.x += xvalue;
+        point.y += yvalue;
+    }
 
-//        canvas.drawLine(endPoint.x, endPoint.y, (float) (endPoint.x - 30 * Math.cos(radians)), (float) (endPoint.y + 15 * Math.sin(radians) ), paint);
-//        canvas.drawLine(endPoint.x, endPoint.y, (float) (endPoint.x - 15 * Math.cos(radians)), (float) (endPoint.y + 30 * Math.sin(radians) ), paint);
+    private Paint getPaint() {
+        Paint paint = new Paint();
+        paint.setColor(Color.WHITE);
+        paint.setStrokeWidth(4);
+        paint.setStyle(Paint.Style.STROKE);
+        paint.setDither(false);
+        paint.setAntiAlias(true);
+        float radius = 8.0f;
+        CornerPathEffect corEffect = new CornerPathEffect(radius);
+        paint.setPathEffect(corEffect);
+        return paint;
+    }
 
+    private void drawPath(Canvas canvas, Paint paint, final Point... points) {
+        if (points != null && points.length > 2) {
+            Path path = new Path();
+            path.setFillType(Path.FillType.EVEN_ODD);
 
-//        Paint paint2 = new Paint();
-//        paint2.setColor(Color.GREEN);
-//        paint2.setStrokeWidth(12);
-//        paint2.setStyle(Paint.Style.FILL);
+            path.moveTo(points[0].x, points[0].y);
+            path.lineTo(points[1].x, points[1].y);
+            path.lineTo(points[2].x, points[2].y);
+            path.moveTo(points[1].x, points[1].y);
+            path.lineTo(points[3].x, points[3].y);
 
-
-//        Path path = new Path();
-//        path.setFillType(Path.FillType.EVEN_ODD);
-//
-//        path.moveTo(xend, yend);
-//        path.lineTo(xend, yend + 50);
-//        path.lineTo(xend - 50, yend - 50 );
-//        path.lineTo(xend - 16, yend + 16);
-//        path.lineTo(point_x_1, point_y_1);
-//        path.close();
-// offset is cumlative
-// next draw displaces 50,100 from previous
-//        path.offset(50, 100);
-//        canvas.drawPath(path, paint2);
-
+            canvas.drawPath(path, paint);
+        }
     }
 
     private float[] getRotatedPoints(double angle, Point a, Point b) {
@@ -404,14 +424,14 @@ public class ShowcaseView extends RelativeLayout
         float centerX = Math.abs((a.x + b.x) / 2);
         float centerY = Math.abs(a.y + b.y) / 2;
 
-//create the matrix
+        //create the matrix
         Matrix rotateMat = new Matrix();
 
-//rotate the matrix around the center
+        //rotate the matrix around the center
         rotateMat.setRotate((float) angle, centerX, centerY);
         rotateMat.mapPoints(linePoints);
 
-//draw the line
+        //draw the line
         return linePoints;
     }
 
@@ -431,62 +451,6 @@ public class ShowcaseView extends RelativeLayout
         return Math.toDegrees(inRads);
     }
 
-    private void drawOvalAndArrow(Canvas canvas) {
-
-
-        Paint circlePaint = new Paint();
-        circlePaint.setStyle(Paint.Style.FILL_AND_STROKE);
-        circlePaint.setAntiAlias(true);
-        circlePaint.setStrokeWidth(2);
-        circlePaint.setColor(Color.CYAN);
-
-        float centerWidth = canvas.getWidth() / 2; //get center x of display
-        float centerHeight = canvas.getHeight() / 2; //get center y of display
-        float circleRadius = 20; //set radius
-        float circleDistance = 200; //set distance between both circles
-
-        //draw circles
-        canvas.drawCircle(centerWidth, centerHeight, circleRadius, circlePaint);
-        canvas.drawCircle(centerWidth + circleDistance, centerHeight, circleRadius, circlePaint);
-
-
-        //to draw an arrow, just lines needed, so style is only STROKE
-        circlePaint.setStyle(Paint.Style.STROKE);
-        circlePaint.setColor(Color.RED);
-
-        //create a path to draw on
-        Path arrowPath = new Path();
-
-        //create an invisible oval. the oval is for "behind the scenes" ,to set the path´
-        //area. Imagine this is an egg behind your circles. the circles are in the middle of this egg
-        final RectF arrowOval = new RectF();
-        arrowOval.set(centerWidth,
-                centerHeight - 80,
-                centerWidth + circleDistance,
-                centerHeight + 80);
-
-        //add the oval to path
-        arrowPath.addArc(arrowOval, -180, 180);
-
-        //draw path on canvas
-        canvas.drawPath(arrowPath, circlePaint);
-
-
-        //draw arrowhead on path start
-        arrowPath.moveTo(centerWidth, centerHeight); //move to the center of first circle
-        arrowPath.lineTo(centerWidth - circleRadius, centerHeight - circleRadius);//draw the first arrowhead line to the left
-        arrowPath.moveTo(centerWidth, centerHeight);//move back to the center
-        arrowPath.lineTo(centerWidth + circleRadius, centerHeight - circleRadius);//draw the next arrowhead line to the right
-
-        //same as above on path end
-        arrowPath.moveTo(centerWidth + circleDistance, centerHeight);
-        arrowPath.lineTo((centerWidth + circleDistance) - circleRadius, centerHeight - circleRadius);
-        arrowPath.moveTo(centerWidth + circleDistance, centerHeight);
-        arrowPath.lineTo((centerWidth + circleDistance) + circleRadius, centerHeight - circleRadius);
-
-        //draw the path
-        canvas.drawPath(arrowPath, circlePaint);
-    }
 
     @Override
     public void hide() {
