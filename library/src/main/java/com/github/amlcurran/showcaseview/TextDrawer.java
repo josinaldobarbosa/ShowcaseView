@@ -247,7 +247,15 @@ class TextDrawer {
         this.compensationTextPositionHeight = height;
     }
 
-    private float getCalculateTextPosition(float position, float compesationText) {
+    public float getCompensationTextPositionWidth() {
+        return compensationTextPositionWidth;
+    }
+
+    public float getCompensationTextPositionHeight() {
+        return compensationTextPositionHeight;
+    }
+
+    public float getCalculateTextPosition(float position, float compesationText) {
         if (compesationText >= 0) {
             return (position + compesationText);
         } else {

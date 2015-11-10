@@ -22,6 +22,7 @@ import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Paint;
 import android.graphics.Point;
 import android.graphics.PorterDuff;
 import android.text.Layout;
@@ -39,7 +40,7 @@ import android.widget.RelativeLayout;
 
 import com.github.amlcurran.showcaseview.targets.Target;
 
-import java.util.HashSet;
+import java.util.ArrayList;
 
 import static com.github.amlcurran.showcaseview.AnimationFactory.AnimationEndListener;
 import static com.github.amlcurran.showcaseview.AnimationFactory.AnimationStartListener;
@@ -65,7 +66,7 @@ public class ShowcaseView extends RelativeLayout
     private final ShotStateStore shotStateStore;
 
     // Showcase metrics
-    HashSet<Point> showcases = new HashSet<>();
+    ArrayList<Point> showcases = new ArrayList<>();
     private float scaleMultiplier = 1f;
 
     // Text position
@@ -199,8 +200,8 @@ public class ShowcaseView extends RelativeLayout
 
     private void updateBitmap() {
         if (bitmapBuffer == null || haveBoundsChanged()) {
-            if(bitmapBuffer != null)
-        		bitmapBuffer.recycle();
+            if (bitmapBuffer != null)
+                bitmapBuffer.recycle();
             bitmapBuffer = Bitmap.createBitmap(getMeasuredWidth(), getMeasuredHeight(), Bitmap.Config.ARGB_8888);
 
         }
@@ -289,7 +290,75 @@ public class ShowcaseView extends RelativeLayout
         // Draw the text on the screen, recalculating its position if necessary
         textDrawer.draw(canvas);
 
+
+        //Draw arrows
+
+        if (!hasNoTarget) {
+            float[] textPosition = this.textDrawer.getBestTextPosition();
+
+            final int INDEX_TEXT_START_X = 0;
+            final int INDEX_TEXT_START_Y = 1;
+            final int INDEX_TEXT_WIDTH = 2;
+
+            float midx = textDrawer.getCalculateTextPosition(textPosition[INDEX_TEXT_START_X], textDrawer.getCompensationTextPositionWidth());
+            float midy = textDrawer.getCalculateTextPosition(textPosition[INDEX_TEXT_START_Y], textDrawer.getCompensationTextPositionHeight());
+            float width = textPosition[INDEX_TEXT_WIDTH];
+
+            if (!showcases.isEmpty()) {
+                createArrow(canvas, midx - (width / 4), (int) midy, showcases.get(1).x, (int) (showcases.get(1).y + showcaseDrawer.getBlockedRadius()), 15, width);
+                createArrow(canvas, midx, (int) midy, showcases.get(2).x, (int) (showcases.get(2).y + showcaseDrawer.getBlockedRadius()), 0, width);
+                createArrow(canvas, midx + (width / 4), (int) midy, showcases.get(3).x, (int) (showcases.get(3).y + showcaseDrawer.getBlockedRadius()), 15, width);
+            }
+        }
+
         super.dispatchDraw(canvas);
+
+    }
+
+
+    private void createArrow(Canvas canvas, float x, int y, int xend, int yend, int angle, float width) {
+        if (xend - x > 0) {
+            angle += angle;
+        } else {
+            angle -= angle;
+        }
+
+        double radians = Math.toRadians(angle);
+        double x2 = 30.0 * Math.cos(radians);
+        double y2 = 30.0 * Math.sin(radians);
+
+        Paint paint = new Paint();
+        paint.setColor(Color.WHITE);
+        paint.setStrokeWidth(8);
+
+        Point startPoint = new Point((int) (x + (width / 2)), y - 16);
+        Point endPoint = new Point(xend, yend + 48);
+
+        canvas.drawLine(startPoint.x, startPoint.y, endPoint.x, endPoint.y, paint);
+
+        canvas.drawLine(endPoint.x, endPoint.y, (float) (endPoint.x - 30 * Math.cos(radians)), (float) (endPoint.y + 15 * Math.sin(radians) ), paint);
+        canvas.drawLine(endPoint.x, endPoint.y, (float) (endPoint.x - 15 * Math.cos(radians)), (float) (endPoint.y + 30 * Math.sin(radians) ), paint);
+
+
+//        Paint paint2 = new Paint();
+//        paint2.setColor(Color.GREEN);
+//        paint2.setStrokeWidth(12);
+//        paint2.setStyle(Paint.Style.FILL);
+
+
+//        Path path = new Path();
+//        path.setFillType(Path.FillType.EVEN_ODD);
+//
+//        path.moveTo(xend, yend);
+//        path.lineTo(xend, yend + 50);
+//        path.lineTo(xend - 50, yend - 50 );
+//        path.lineTo(xend - 16, yend + 16);
+//        path.lineTo(point_x_1, point_y_1);
+//        path.close();
+// offset is cumlative
+// next draw displaces 50,100 from previous
+//        path.offset(50, 100);
+//        canvas.drawPath(path, paint2);
 
     }
 
@@ -421,7 +490,7 @@ public class ShowcaseView extends RelativeLayout
         /**
          * @param useNewStyle should use "new style" showcase (see {@link #withNewStyleShowcase()}
          * @deprecated use {@link #withHoloShowcase()}, {@link #withNewStyleShowcase()}, or
-         *  {@link #setShowcaseDrawer(ShowcaseDrawer)}
+         * {@link #setShowcaseDrawer(ShowcaseDrawer)}
          */
         @Deprecated
         public Builder(Activity activity, boolean useNewStyle) {

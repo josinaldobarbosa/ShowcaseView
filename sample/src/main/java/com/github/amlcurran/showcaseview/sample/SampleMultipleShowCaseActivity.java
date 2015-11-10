@@ -50,10 +50,9 @@ public class SampleMultipleShowCaseActivity extends AppCompatActivity {
                 .withMaterialShowcase()
                 .setStyle(R.style.CustomShowcaseTheme2)
                 //.singleShot(uniqueId)
-                .setContentTitle("Titulo")
                 .setContentTitlePaint(titlePaint)
-                .setContentText("Descrição de teste de lerolero")
-                .setCompensationTextPosition(0, 110)
+                .setContentText("Navegue aqui para conhecer as seções e descubra o que está bombando dentro de cada uma.")
+                .setCompensationTextPosition(0, 220)
                 .replaceEndButton(getShowCaseCloseView())
                 .build();
 
