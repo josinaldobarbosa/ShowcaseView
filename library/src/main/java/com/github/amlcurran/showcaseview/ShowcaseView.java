@@ -22,13 +22,17 @@ import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Matrix;
 import android.graphics.Paint;
+import android.graphics.Path;
 import android.graphics.Point;
 import android.graphics.PorterDuff;
+import android.graphics.RectF;
 import android.text.Layout;
 import android.text.TextPaint;
 import android.text.TextUtils;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -305,9 +309,9 @@ public class ShowcaseView extends RelativeLayout
             float width = textPosition[INDEX_TEXT_WIDTH];
 
             if (!showcases.isEmpty()) {
-                createArrow(canvas, midx - (width / 4), (int) midy, showcases.get(1).x, (int) (showcases.get(1).y + showcaseDrawer.getBlockedRadius()), 15, width);
-                createArrow(canvas, midx, (int) midy, showcases.get(2).x, (int) (showcases.get(2).y + showcaseDrawer.getBlockedRadius()), 0, width);
-                createArrow(canvas, midx + (width / 4), (int) midy, showcases.get(3).x, (int) (showcases.get(3).y + showcaseDrawer.getBlockedRadius()), 15, width);
+                createArrow(canvas, midx - (width / 4), (int) midy, showcases.get(1).x, (int) (showcases.get(1).y + showcaseDrawer.getBlockedRadius()), width);
+                createArrow(canvas, midx, (int) midy, showcases.get(2).x, (int) (showcases.get(2).y + showcaseDrawer.getBlockedRadius()), width);
+                createArrow(canvas, midx + (width / 4), (int) midy, showcases.get(3).x, (int) (showcases.get(3).y + showcaseDrawer.getBlockedRadius()), width);
             }
         }
 
@@ -316,28 +320,59 @@ public class ShowcaseView extends RelativeLayout
     }
 
 
-    private void createArrow(Canvas canvas, float x, int y, int xend, int yend, int angle, float width) {
-        if (xend - x > 0) {
-            angle += angle;
-        } else {
-            angle -= angle;
-        }
-
-        double radians = Math.toRadians(angle);
-        double x2 = 30.0 * Math.cos(radians);
-        double y2 = 30.0 * Math.sin(radians);
-
+    private void createArrow(Canvas canvas, float x, int y, int xend, int yend, float width) {
         Paint paint = new Paint();
         paint.setColor(Color.WHITE);
-        paint.setStrokeWidth(8);
+        paint.setStrokeWidth(3);
+        paint.setStyle(Paint.Style.STROKE);
+        paint.setDither(false);
+        paint.setAntiAlias(true);
 
         Point startPoint = new Point((int) (x + (width / 2)), y - 16);
         Point endPoint = new Point(xend, yend + 48);
 
-        canvas.drawLine(startPoint.x, startPoint.y, endPoint.x, endPoint.y, paint);
+        Log.d("LINE ANGLE", "" + angleMadeByLine(startPoint, endPoint));
+        double angle = angleMadeByLine(startPoint, endPoint);
 
-        canvas.drawLine(endPoint.x, endPoint.y, (float) (endPoint.x - 30 * Math.cos(radians)), (float) (endPoint.y + 15 * Math.sin(radians) ), paint);
-        canvas.drawLine(endPoint.x, endPoint.y, (float) (endPoint.x - 15 * Math.cos(radians)), (float) (endPoint.y + 30 * Math.sin(radians) ), paint);
+
+        Point a = new Point(startPoint.x,startPoint.y);
+        Point b = new Point(endPoint.x, endPoint.y);
+        Point c = new Point(endPoint.x - 15, endPoint.y + 21);
+        Point d = new Point(endPoint.x + 15, endPoint.y + 21);
+
+        float[] lineRotated1 = {};
+        float[] lineRotated2 = {};
+
+        //I need to draw a couple of lines A --> B , B --> C , B --> D
+
+        if (angle < 270) {
+            lineRotated1 = getRotatedPoints(angle + 63, b, c);
+            lineRotated2 = getRotatedPoints(angle + 63, b, d);
+
+            canvas.drawLine(startPoint.x, startPoint.y, endPoint.x, endPoint.y, paint);
+            canvas.drawLine(endPoint.x, endPoint.y, lineRotated1[2],lineRotated1[3], paint);
+            canvas.drawLine(endPoint.x, endPoint.y, lineRotated2[2],lineRotated2[3], paint);
+            return;
+        }
+
+        if (angle > 270) {
+            lineRotated1 = getRotatedPoints(-angle - 21, b, c);
+            lineRotated2 = getRotatedPoints(-angle - 21, b, d);
+
+            canvas.drawLine(startPoint.x, startPoint.y, endPoint.x, endPoint.y, paint);
+            canvas.drawLine(endPoint.x, endPoint.y, lineRotated1[2],lineRotated1[3], paint);
+            canvas.drawLine(endPoint.x, endPoint.y, lineRotated2[2],lineRotated2[3], paint);
+            return;
+        }
+
+        canvas.drawLine(startPoint.x, startPoint.y, endPoint.x, endPoint.y, paint);
+        canvas.drawLine(endPoint.x, endPoint.y, endPoint.x - 15, endPoint.y + 21, paint);
+        canvas.drawLine(endPoint.x, endPoint.y, endPoint.x + 15, endPoint.y + 21, paint);
+
+        return;
+
+//        canvas.drawLine(endPoint.x, endPoint.y, (float) (endPoint.x - 30 * Math.cos(radians)), (float) (endPoint.y + 15 * Math.sin(radians) ), paint);
+//        canvas.drawLine(endPoint.x, endPoint.y, (float) (endPoint.x - 15 * Math.cos(radians)), (float) (endPoint.y + 30 * Math.sin(radians) ), paint);
 
 
 //        Paint paint2 = new Paint();
@@ -360,6 +395,97 @@ public class ShowcaseView extends RelativeLayout
 //        path.offset(50, 100);
 //        canvas.drawPath(path, paint2);
 
+    }
+
+    private float[] getRotatedPoints(double angle, Point a, Point b) {
+        float[] linePoints = new float[]{a.x, a.y, b.x, b.y};
+
+        //get the center of the line
+        float centerX = Math.abs((a.x + b.x) / 2);
+        float centerY = Math.abs(a.y + b.y) / 2;
+
+//create the matrix
+        Matrix rotateMat = new Matrix();
+
+//rotate the matrix around the center
+        rotateMat.setRotate((float) angle, centerX, centerY);
+        rotateMat.mapPoints(linePoints);
+
+//draw the line
+        return linePoints;
+    }
+
+    private double angleMadeByLine(Point a, Point b) {
+        double dx = b.x - a.x;
+        // Minus to correct for coord re-mapping
+        double dy = -(b.y - a.y);
+
+        double inRads = Math.atan2(dy, dx);
+
+        // We need to map to coord system when 0 degree is at 3 O'clock, 270 at 12 O'clock
+        if (inRads < 0)
+            inRads = Math.abs(inRads);
+        else
+            inRads = 2 * Math.PI - inRads;
+
+        return Math.toDegrees(inRads);
+    }
+
+    private void drawOvalAndArrow(Canvas canvas) {
+
+
+        Paint circlePaint = new Paint();
+        circlePaint.setStyle(Paint.Style.FILL_AND_STROKE);
+        circlePaint.setAntiAlias(true);
+        circlePaint.setStrokeWidth(2);
+        circlePaint.setColor(Color.CYAN);
+
+        float centerWidth = canvas.getWidth() / 2; //get center x of display
+        float centerHeight = canvas.getHeight() / 2; //get center y of display
+        float circleRadius = 20; //set radius
+        float circleDistance = 200; //set distance between both circles
+
+        //draw circles
+        canvas.drawCircle(centerWidth, centerHeight, circleRadius, circlePaint);
+        canvas.drawCircle(centerWidth + circleDistance, centerHeight, circleRadius, circlePaint);
+
+
+        //to draw an arrow, just lines needed, so style is only STROKE
+        circlePaint.setStyle(Paint.Style.STROKE);
+        circlePaint.setColor(Color.RED);
+
+        //create a path to draw on
+        Path arrowPath = new Path();
+
+        //create an invisible oval. the oval is for "behind the scenes" ,to set the path´
+        //area. Imagine this is an egg behind your circles. the circles are in the middle of this egg
+        final RectF arrowOval = new RectF();
+        arrowOval.set(centerWidth,
+                centerHeight - 80,
+                centerWidth + circleDistance,
+                centerHeight + 80);
+
+        //add the oval to path
+        arrowPath.addArc(arrowOval, -180, 180);
+
+        //draw path on canvas
+        canvas.drawPath(arrowPath, circlePaint);
+
+
+        //draw arrowhead on path start
+        arrowPath.moveTo(centerWidth, centerHeight); //move to the center of first circle
+        arrowPath.lineTo(centerWidth - circleRadius, centerHeight - circleRadius);//draw the first arrowhead line to the left
+        arrowPath.moveTo(centerWidth, centerHeight);//move back to the center
+        arrowPath.lineTo(centerWidth + circleRadius, centerHeight - circleRadius);//draw the next arrowhead line to the right
+
+        //same as above on path end
+        arrowPath.moveTo(centerWidth + circleDistance, centerHeight);
+        arrowPath.lineTo((centerWidth + circleDistance) - circleRadius, centerHeight - circleRadius);
+        arrowPath.moveTo(centerWidth + circleDistance, centerHeight);
+        arrowPath.lineTo((centerWidth + circleDistance) + circleRadius, centerHeight - circleRadius);
+
+        //draw the path
+        canvas.drawPath(arrowPath, circlePaint);
     }
 
     @Override
