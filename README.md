@@ -31,6 +31,7 @@ sv = new ShowcaseView.Builder(this)
         ...
         .build();
 ~~~
+- Compatible for min sdk 11+ to 10+
 
 **CAUTION:**
  my modifications may have caused malfunction of some functions that were not my focus.
