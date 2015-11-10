@@ -98,7 +98,13 @@ public class ShowcaseView extends RelativeLayout
         super(context, attrs, defStyle);
 
         ApiUtils apiUtils = new ApiUtils();
-        animationFactory = new AnimatorAnimationFactory();
+
+        if (apiUtils.isCompatWithHoneycomb()) {
+            animationFactory = new AnimatorAnimationFactory();
+        } else {
+            animationFactory = new JumpingAnimationFactory();
+        }
+
         showcaseAreaCalculator = new ShowcaseAreaCalculator();
         shotStateStore = new ShotStateStore(context);
 
@@ -513,6 +519,14 @@ public class ShowcaseView extends RelativeLayout
          */
         public Builder setTarget(Target... target) {
             showcaseView.setTarget(target);
+            return this;
+        }
+
+        /**
+         * Change the duration the fade in and fade out
+         */
+        public Builder setFadeDurations(long fadeInMillis, long fadeOutMillis) {
+            showcaseView.setFadeDurations(fadeInMillis, fadeOutMillis);
             return this;
         }
 

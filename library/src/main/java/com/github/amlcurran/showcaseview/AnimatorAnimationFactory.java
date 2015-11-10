@@ -19,11 +19,13 @@ package com.github.amlcurran.showcaseview;
 import android.animation.Animator;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
+import android.annotation.TargetApi;
 import android.graphics.Point;
 import android.os.Build;
 import android.view.View;
 import android.view.animation.AccelerateDecelerateInterpolator;
 
+@TargetApi(Build.VERSION_CODES.HONEYCOMB)
 class AnimatorAnimationFactory implements AnimationFactory {
 
     private static final String ALPHA = "alpha";
@@ -38,11 +40,6 @@ class AnimatorAnimationFactory implements AnimationFactory {
 
     @Override
     public void fadeInView(View target, long duration, final AnimationStartListener listener) {
-        if (!isCompatibleAnimation()) {
-            listener.onAnimationStart();
-            return;
-        }
-
         ObjectAnimator oa = ObjectAnimator.ofFloat(target, ALPHA, INVISIBLE, VISIBLE);
         oa.setDuration(duration).addListener(new Animator.AnimatorListener() {
             @Override
@@ -67,11 +64,6 @@ class AnimatorAnimationFactory implements AnimationFactory {
 
     @Override
     public void fadeOutView(View target, long duration, final AnimationEndListener listener) {
-        if (!isCompatibleAnimation()) {
-            listener.onAnimationEnd();
-            return;
-        }
-
         ObjectAnimator oa = ObjectAnimator.ofFloat(target, ALPHA, INVISIBLE);
         oa.setDuration(duration).addListener(new Animator.AnimatorListener() {
             @Override
@@ -96,20 +88,12 @@ class AnimatorAnimationFactory implements AnimationFactory {
 
     @Override
     public void animateTargetToPoint(ShowcaseView showcaseView, Point point) {
-        if (!isCompatibleAnimation()) {
-            return;
-        }
-
         AnimatorSet set = new AnimatorSet();
         ObjectAnimator xAnimator = ObjectAnimator.ofInt(showcaseView, "showcaseX", point.x);
         ObjectAnimator yAnimator = ObjectAnimator.ofInt(showcaseView, "showcaseY", point.y);
         set.playTogether(xAnimator, yAnimator);
         set.setInterpolator(interpolator);
         set.start();
-    }
-
-    public boolean isCompatibleAnimation() {
-        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB;
     }
 
 }
