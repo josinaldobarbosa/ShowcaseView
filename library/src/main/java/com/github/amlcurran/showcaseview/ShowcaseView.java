@@ -30,9 +30,11 @@ import android.graphics.Path;
 import android.graphics.Point;
 import android.graphics.PorterDuff;
 import android.text.Layout;
+import android.util.FloatMath;
 import android.text.TextPaint;
 import android.text.TextUtils;
 import android.util.AttributeSet;
+import android.util.FloatMath;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
@@ -49,6 +51,7 @@ import java.util.ArrayList;
 
 import static com.github.amlcurran.showcaseview.AnimationFactory.AnimationEndListener;
 import static com.github.amlcurran.showcaseview.AnimationFactory.AnimationStartListener;
+import static java.lang.Math.sqrt;
 
 /**
  * A view which allows you to showcase areas of your app with an explanation.
@@ -324,18 +327,6 @@ public class ShowcaseView extends RelativeLayout
                 createArrow(canvas, midx - (width / 4), (int) midy, showcases.get(1).x, (int) (showcases.get(1).y + showcaseDrawer.getBlockedRadius()), width);
                 createArrow(canvas, midx, (int) midy, showcases.get(2).x, (int) (showcases.get(2).y + showcaseDrawer.getBlockedRadius()), width);
                 createArrow(canvas, midx + (width / 4), (int) midy, showcases.get(3).x, (int) (showcases.get(3).y + showcaseDrawer.getBlockedRadius()), width);
-
-//                for (int i = 0; i < showcases.size(); i++) {
-//                    int deltaX = 0;
-//
-//                    if (i == 0) {
-//                        deltaX = (int) -(width / 4);
-//                    } else if (i == 2) {
-//                        deltaX = (int) (width / 4);
-//                    }
-//
-//                    createArrow(canvas, midx + deltaX, (int) midy, showcases.get(i).x, (int) (showcases.get(i).y ), width);
-//                }
             }
         }
 
@@ -360,7 +351,6 @@ public class ShowcaseView extends RelativeLayout
         Point c = new Point(endPoint.x, endPoint.y);
         Point d = new Point(endPoint.x, endPoint.y);
 
-
         float[] lineRotated1 = {};
         float[] lineRotated2 = {};
         int deltaX = (int) dpToPx(9,getResources());
@@ -371,11 +361,9 @@ public class ShowcaseView extends RelativeLayout
 
         //I need to draw a couple of lines A --> B , B --> C , B --> D
 
-        int angleCompensation = 0;
-
         if (angle < 270) {
-            lineRotated1 = getRotatedPoints(angle + 63, b, c);
-            lineRotated2 = getRotatedPoints(angle + 63, b, d);
+            lineRotated1 = getRotatedPoints(angle + 57, b, c);
+            lineRotated2 = getRotatedPoints(angle + 57, b, d);
 
             canvas.drawLine(startPoint.x, startPoint.y, endPoint.x, endPoint.y, paint);
             canvas.drawLine(endPoint.x, endPoint.y, lineRotated1[2], lineRotated1[3], paint);
@@ -385,8 +373,10 @@ public class ShowcaseView extends RelativeLayout
         }
 
         if (angle > 270) {
-            lineRotated1 = getRotatedPoints(-angle, b, c);
-            lineRotated2 = getRotatedPoints(-angle, b, d);
+//            lineRotated1 = getRotatedPoints(-angle + 5 , b, c);
+//            lineRotated2 = getRotatedPoints(-angle + 5, b, d);
+            lineRotated1 = getRotatedPoints(-angle + dpToPx(2f, getResources()) , b, c);
+            lineRotated2 = getRotatedPoints(-angle + dpToPx(2f, getResources()), b, d);
 
             canvas.drawLine(startPoint.x, startPoint.y, endPoint.x, endPoint.y, paint);
             canvas.drawLine(endPoint.x, endPoint.y, lineRotated1[2], lineRotated1[3], paint);
@@ -398,6 +388,8 @@ public class ShowcaseView extends RelativeLayout
         canvas.drawLine(startPoint.x, startPoint.y, endPoint.x, endPoint.y, paint);
         canvas.drawLine(endPoint.x, endPoint.y, c.x, c.y, paint);
         canvas.drawLine(endPoint.x, endPoint.y, d.x, d.y, paint);
+
+
     }
 
     public static float dpToPx(float value, Resources resources) {
@@ -408,6 +400,49 @@ public class ShowcaseView extends RelativeLayout
         point.x += xvalue;
         point.y += yvalue;
     }
+
+    private Path drawEqualSidesTriangle(Point p1, int width, Direction direction)
+    {
+        Point p2 = null, p3 = null;
+
+        int triangleHeight = (int) (width * (sqrt(3) / 2));
+
+        if (direction == Direction.NORTH)
+        {
+            p2 = new Point(p1.x + width, p1.y);
+            p3 = new Point(p1.x + (width / 2), p1.y - width);
+        }
+        else if (direction == Direction.SOUTH)
+        {
+            p2 = new Point(p1.x + width, p1.y);
+            p3 = new Point(p1.x + (width / 2), p1.y + width);
+        }
+        else if (direction == Direction.EAST)
+        {
+            p2 = new Point(p1.x, p1.y + width);
+            p3 = new Point(p1.x - width, p1.y + (width / 2));
+        }
+        else if (direction == Direction.WEST)
+        {
+            p2 = new Point(p1.x, p1.y + width);
+            p3 = new Point(p1.x + triangleHeight, p1.y + (width / 2));
+        }
+
+        Path path = new Path();
+        path.moveTo(p1.x, p1.y);
+        path.lineTo(p2.x, p2.y);
+        path.lineTo(p3.x, p3.y);
+
+        return path;
+    }
+
+    public enum Direction
+    {
+        NORTH, SOUTH, EAST, WEST;
+    }
+
+
+
 
     private Paint getPaint() {
         Paint paint = new Paint();
