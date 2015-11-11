@@ -34,7 +34,7 @@ repositories {
 apply plugin: 'com.android.application'
 
 dependencies {
-    compile project(':library')
+    compile project(':showcase-lib')
     //compile 'com.github.amlcurran.showcaseview:library:5.0.0-SNAPSHOT'
     compile 'com.android.support:support-v4:23.0.1'
     compile 'com.nineoldandroids:library:2.4.0'
