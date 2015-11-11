@@ -18,6 +18,7 @@ package com.github.amlcurran.showcaseview;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.res.Resources;
 import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -64,8 +65,8 @@ public class ShowcaseView extends RelativeLayout
 
 
     //Arrows
-    public static final int MARGIN_FROM_TEXT = 16;
-    public static final int MARGIN_FROM_SPOT = 100;
+    public static final int MARGIN_FROM_TEXT = 6;
+    public static final int MARGIN_FROM_SPOT = 14;
 
     private View mEndView;
     private final TextDrawer textDrawer;
@@ -305,7 +306,6 @@ public class ShowcaseView extends RelativeLayout
         // Draw the text on the screen, recalculating its position if necessary
         textDrawer.draw(canvas);
 
-
         //Draw arrows
 
         if (!hasNoTarget) {
@@ -318,52 +318,69 @@ public class ShowcaseView extends RelativeLayout
             float midx = textDrawer.getCalculateTextPosition(textPosition[INDEX_TEXT_START_X], textDrawer.getCompensationTextPositionWidth());
             float midy = textDrawer.getCalculateTextPosition(textPosition[INDEX_TEXT_START_Y], textDrawer.getCompensationTextPositionHeight());
             float width = textPosition[INDEX_TEXT_WIDTH];
+            float fromCenterDistance = showcaseDrawer.getBlockedRadius() / 2;
 
             if (!showcases.isEmpty()) {
-                createArrow(canvas, midx - (width / 4), (int) midy, showcases.get(1).x, (int) (showcases.get(1).y + (showcaseDrawer.getBlockedRadius() / 2)), width);
-                createArrow(canvas, midx, (int) midy, showcases.get(2).x, (int) (showcases.get(2).y + (showcaseDrawer.getBlockedRadius() / 2)), width);
-                createArrow(canvas, midx + (width / 4), (int) midy, showcases.get(3).x, (int) (showcases.get(3).y + (showcaseDrawer.getBlockedRadius() / 2)), width);
+                createArrow(canvas, midx - (width / 4), (int) midy, showcases.get(1).x, (int) (showcases.get(1).y + showcaseDrawer.getBlockedRadius()), width);
+                createArrow(canvas, midx, (int) midy, showcases.get(2).x, (int) (showcases.get(2).y + showcaseDrawer.getBlockedRadius()), width);
+                createArrow(canvas, midx + (width / 4), (int) midy, showcases.get(3).x, (int) (showcases.get(3).y + showcaseDrawer.getBlockedRadius()), width);
+
+//                for (int i = 0; i < showcases.size(); i++) {
+//                    int deltaX = 0;
+//
+//                    if (i == 0) {
+//                        deltaX = (int) -(width / 4);
+//                    } else if (i == 2) {
+//                        deltaX = (int) (width / 4);
+//                    }
+//
+//                    createArrow(canvas, midx + deltaX, (int) midy, showcases.get(i).x, (int) (showcases.get(i).y ), width);
+//                }
             }
         }
 
         super.dispatchDraw(canvas);
-
     }
 
 
     private void createArrow(Canvas canvas, float x, int y, int xend, int yend, float width) {
         Paint paint = getPaint();
 
-        Point startPoint = new Point((int) (x + (width / 2)), y - MARGIN_FROM_TEXT);
-        Point endPoint = new Point(xend, yend + MARGIN_FROM_SPOT);
+        int marginText = (int) dpToPx(MARGIN_FROM_TEXT, getResources());
+        int marginSpot = (int) dpToPx(MARGIN_FROM_SPOT, getResources());
 
-        Log.d("LINE ANGLE", "" + angleMadeByLine(startPoint, endPoint));
+        Point startPoint = new Point((int) (x + (width / 2)), y - marginText);
+        Point endPoint = new Point(xend, yend + marginSpot);
+
         double angle = angleMadeByLine(startPoint, endPoint);
+        Log.d("LINE ANGLE", "" + angle);
 
         Point a = new Point(startPoint.x, startPoint.y);
         Point b = new Point(endPoint.x, endPoint.y);
         Point c = new Point(endPoint.x, endPoint.y);
         Point d = new Point(endPoint.x, endPoint.y);
 
-        applyCompensation(c, -15, 21);
-        applyCompensation(d, +15, 21);
-
 
         float[] lineRotated1 = {};
         float[] lineRotated2 = {};
+        int deltaX = (int) dpToPx(9,getResources());
+        int deltaY = (int) dpToPx(15,getResources());
+
+        applyCompensation(c, -deltaX, deltaY);
+        applyCompensation(d, deltaX, deltaY);
 
         //I need to draw a couple of lines A --> B , B --> C , B --> D
 
+        int angleCompensation = 0;
+
         if (angle < 270) {
-            lineRotated1 = getRotatedPoints(angle + 60, b, c);
-            lineRotated2 = getRotatedPoints(angle + 60, b, d);
+            lineRotated1 = getRotatedPoints(angle + 63, b, c);
+            lineRotated2 = getRotatedPoints(angle + 63, b, d);
+
             canvas.drawLine(startPoint.x, startPoint.y, endPoint.x, endPoint.y, paint);
             canvas.drawLine(endPoint.x, endPoint.y, lineRotated1[2], lineRotated1[3], paint);
             canvas.drawLine(endPoint.x, endPoint.y, lineRotated2[2], lineRotated2[3], paint);
-            c = new Point((int) lineRotated1[2], (int) lineRotated1[3]);
-            d = new Point((int) lineRotated2[2], (int) lineRotated2[3]);
 
-            drawPath(canvas, paint, a, b, c, d);
             return;
         }
 
@@ -375,19 +392,16 @@ public class ShowcaseView extends RelativeLayout
             canvas.drawLine(endPoint.x, endPoint.y, lineRotated1[2], lineRotated1[3], paint);
             canvas.drawLine(endPoint.x, endPoint.y, lineRotated2[2], lineRotated2[3], paint);
 
-            c = new Point((int) lineRotated1[2], (int) lineRotated1[3]);
-            d = new Point((int) lineRotated2[2], (int) lineRotated2[3]);
-
-            drawPath(canvas, paint, a, b, c, d);
-
             return;
         }
-
-        drawPath(canvas, paint, a, b, c, d);
 
         canvas.drawLine(startPoint.x, startPoint.y, endPoint.x, endPoint.y, paint);
         canvas.drawLine(endPoint.x, endPoint.y, c.x, c.y, paint);
         canvas.drawLine(endPoint.x, endPoint.y, d.x, d.y, paint);
+    }
+
+    public static float dpToPx(float value, Resources resources) {
+        return TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, value, resources.getDisplayMetrics());
     }
 
     private void applyCompensation(Point point, int xvalue, int yvalue) {
@@ -398,11 +412,11 @@ public class ShowcaseView extends RelativeLayout
     private Paint getPaint() {
         Paint paint = new Paint();
         paint.setColor(Color.WHITE);
-        paint.setStrokeWidth(4);
+        paint.setStrokeWidth(dpToPx(1.5f,getResources()));
         paint.setStyle(Paint.Style.STROKE);
         paint.setDither(false);
         paint.setAntiAlias(true);
-        float radius = 8.0f;
+        float radius = 4.0f;
         CornerPathEffect corEffect = new CornerPathEffect(radius);
         paint.setPathEffect(corEffect);
         return paint;
